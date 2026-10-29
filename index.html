@@ -3,57 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatGPT الخاص بي</title>
+    <title>ChatGPT Pro - الذكاء الاصطناعي</title>
+    <!-- تضمين مكتبات التصميم والأيقونات -->
+    <script src="https://tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cloudflare.com">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #343541; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 90vh; }
-        #chat-box { flex: 1; overflow-y: auto; border: 1px solid #4d4d4d; padding: 15px; border-radius: 8px; background: #40414f; margin-bottom: 10px; }
-        .msg { padding: 10px; margin: 5px 0; border-radius: 5px; max-width: 80%; display: block; clear: both; }
-        .user { background-color: #202123; float: right; }
-        .bot { background-color: #10a37f; float: left; }
-        .input-area { display: flex; gap: 10px; clear: both; }
-        input { flex: 1; padding: 12px; border-radius: 5px; border: none; font-size: 16px; background-color: #40414f; color: white; }
-        button { background: #10a37f; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .typing-dot { animation: typing 1.4s infinite ease-in-out; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
     </style>
 </head>
-<body>
+<body class="bg-[#212121] text-gray-200 h-screen flex overflow-hidden">
 
-    <h2>🤖 شات الذكاء الاصطناعي المتطور</h2>
-    <div id="chat-box"></div>
-    
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="اسألني أي شيء...">
-        <button onclick="sendMessage()">إرسال</button>
+    <!-- شاشة تسجيل الدخول الوهمية بالجيميل -->
+    <div id="loginModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#2f2f2f] rounded-2xl p-8 max-w-sm w-full text-center border border-gray-700 shadow-2xl">
+            <div class="w-12 h-12 bg-[#10a37f] rounded-full flex items-center justify-center mx-auto mb-4 text-white text-xl">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">مرحباً بك في ChatGPT Pro</h3>
+            <p class="text-sm text-gray-400 mb-6">سجل دخولك فوراً للبدء في استخدام أحدث نماذج الذكاء الاصطناعي</p>
+            <button onclick="handleLogin()" class="w-full bg-white hover:bg-gray-100 text-gray-900 font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition shadow-lg">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                التسجيل باستخدام Google
+            </button>
+        </div>
+    </div>
+
+    <!-- الشريط الجانبي (Sidebar) مثل ChatGPT الأصلي -->
+    <div class="w-64 bg-[#171717] h-full hidden md:flex flex-col p-3 border-l border-white/10">
+        <button onclick="resetChat()" class="w-full border border-white/20 hover:bg-white/5 text-sm rounded-lg p-3 flex items-center gap-3 transition mb-4">
+            <i class="fa-solid fa-plus text-xs"></i> محادثة جديدة
+        </button>
+        <div class="flex-1 overflow-y-auto text-sm space-y-1" id="chatHistoryList">
+            <div class="p-2.5 bg-white/10 rounded-lg flex items-center gap-3 cursor-pointer text-ellipsis overflow-hidden">
+                <i class="fa-regular fa-comment text-gray-400"></i>
+                <span>المحادثة الحالية المتقدمة</span>
+            </div>
+        </div>
+        <!-- الملف الشخصي أسفل القائمة -->
+        <div class="border-t border-white/10 pt-3 flex items-center gap-3 text-sm px-2">
+            <div class="w-8 h-8 rounded-full bg-[#10a37f] flex items-center justify-center font-bold text-white shadow" id="userAvatar">M</div>
+            <div class="overflow-hidden">
+                <p class="font-medium leading-none text-white mb-1" id="profileName">مستخدم ذكي</p>
+                <p class="text-xs text-gray-500 truncate" id="profileEmail">user@gmail.com</p>
+            </div>
+        </div>
+    </div>
+
+    <!--منطقة الشات الرئيسية -->
+    <div class="flex-1 flex flex-col h-full bg-[#212121] relative">
+        
+        <!-- الهيدر العلوي للهواتف -->
+        <div class="md:hidden w-full h-14 bg-[#171717] flex items-center px-4 border-b border-white/10 justify-between">
+            <button onclick="resetChat()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-plus text-lg"></i></button>
+            <span class="font-medium text-sm">ChatGPT Pro</span>
+            <div class="w-7 h-7 rounded-full bg-[#10a37f] text-xs flex items-center justify-center font-bold">M</div>
+        </div>
+
+        <!-- صندوق الرسائل والاقتراحات الترحيبية -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth pb-32" id="chat-box">
+            
+            <!-- الشاشة الترحيبية والاقتراحات الجاهزة -->
+            <div id="welcomeScreen" class="max-w-2xl mx-auto text-center pt-12 space-y-8">
+                <div>
+                    <i class="fa-solid fa-robot text-5xl text-[#10a37f] mb-4"></i>
+                    <h2 class="text-3xl font-bold text-white">بماذا يمكنني مساعدتك اليوم؟</h2>
+                </div>
+                <!-- شبكة الأسئلة المقترحة السريعة -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-right">
+                    <div onclick="suggestQuestion('اكتب لي خطة أسبوعية لممارسة الرياضة وتناول طعام صحي')" class="p-4 bg-[#2f2f2f] hover:bg-[#3e3e3e] border border-gray-700/50 rounded-xl cursor-pointer transition group">
+                        <p class="font-medium text-sm text-gray-200 group-hover:text-white">وضع خطة صحية 🏃‍♂️</p>
+                        <p class="text-xs text-gray-400 mt-1">جدول أسبوعي للرياضة والتغذية الصحيحة</p>
+                    </div>
+                    <div onclick="suggestQuestion('اشرح لي مفهوم العملات الرقمية وتقنية البلوكشين ببساطة')" class="p-4 bg-[#2f2f2f] hover:bg-[#3e3e3e] border border-gray-700/50 rounded-xl cursor-pointer transition group">
+                        <p class="font-medium text-sm text-gray-200 group-hover:text-white">تبسيط المفاهيم المعقدة 💡</p>
+                        <p class="text-xs text-gray-400 mt-1">شرح العملات المشفرة والبلوكشين للمبتدئين</p>
+                    </div>
+                    <div onclick="suggestQuestion('ساعدني في كتابة رسالة بريد إلكتروني رسمية للاعتذار عن الحضور')" class="p-4 bg-[#2f2f2f] hover:bg-[#3e3e3e] border border-gray-700/50 rounded-xl cursor-pointer transition group">
+                        <p class="font-medium text-sm text-gray-200 group-hover:text-white">صياغة إيميل احترافي ✉️</p>
+                        <p class="text-xs text-gray-400 mt-1">رسالة اعتذار رسمية لظرف طارئ</p>
+                    </div>
+                    <div onclick="suggestQuestion('أعطني 5 أفكار قنوات يوتيوب مبتكرة وناجحة بدون ظهور الوجه')" class="p-4 bg-[#2f2f2f] hover:bg-[#3e3e3e] border border-gray-700/50 rounded-xl cursor-pointer transition group">
+                        <p class="font-medium text-sm text-gray-200 group-hover:text-white">أفكار صناعة محتوى 🎬</p>
+                        <p class="text-xs text-gray-400 mt-1">أفكار قنوات يوتيوب مربحة بدون ظهور</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- منطقة الإدخال السفلية (Input Area) ثابته وعائمة ومريحة -->
+        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#212121] via-[#212121] to-transparent pt-6 pb-4 px-4">
+            <div class="max-w-3xl mx-auto relative bg-[#2f2f2f] border border-gray-700 rounded-2xl shadow-xl flex items-center p-1">
+                <input type="text" id="userInput" onkeydown="if(event.key === 'Enter') sendMessage()" placeholder="اسأل ChatGPT Pro..." class="w-full bg-transparent py-3.5 px-4 pr-12 text-white placeholder-gray-400 focus:outline-none text-base">
+                <button onclick="sendMessage()" class="ml-1 p-2.5 bg-[#10a37f] hover:bg-[#1a7f64] text-white rounded-xl transition flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-arrow-up text-base"></i>
+                </button>
+            </div>
+            <p class="text-center text-[10px] text-gray-500 mt-2">قد يقدم الذكاء الاصطناعي معلومات غير دقيقة، تحقق من المصادر المهمة.</p>
+        </div>
+
     </div>
 
     <script>
-        // ضع مفتاح الـ API المجاني الخاص بك من Google AI Studio بين القوسين
-        const API_KEY = "ضع_مفتاح_API_الخاص_بك_هنا"; 
+        // إعدادات مفتاح الـ API للنموذج المطور المتوافق
+        const API_KEY = "AQ.Ab8RN6Lb5tm-mcVA1D6cb-v94B1EAAZBl5Fb8Zx50Z1l_oQ2dQ";
 
-        async function sendMessage() {
-            const inputDel = document.getElementById("userInput");
-            const chatBox = document.getElementById("chat-box");
-            const text = inputDel.value.trim();
-            if(!text) return;
-
-            chatBox.innerHTML += `<div class="msg user"><b>أنت:</b> ${text}</div>`;
-            inputDel.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                const res = await fetch(`https://googleapis.com{API_KEY}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
-                });
-                const data = await res.json();
-                const reply = data.candidates[0].content.parts[0].text;
-
-                chatBox.innerHTML += `<div class="msg bot"><b>الذكاء الاصطناعي:</b> ${reply}</div>`;
-            } catch(e) {
-                chatBox.innerHTML += `<div class="msg" style="color:red; clear:both;">حدث خطأ! تأكد من صحة مفتاح الـ API وتوصيل الإنترنت.</div>`;
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
+        // تشغيل نافذة تسجيل الدخول الوهمية بالجيميل عند بدء التشغيل
+        function handleLogin() {
+            document.getElementById("loginModal").classList.add("hidden");
+            // تخصيص بيانات عشوائية للملف الشخصي لتبدو حقيقية
+            document.getElementById("profileName").innerText = "أحمد محمد";
+            document.getElementById("profileEmail").innerText = "ahmed.maher@gmail.com";
+            document.getElementById("userAvatar").innerText = "أ";
         }
-    </script>
-</body>
-</html>
+
+        // إرسال السؤال الجاهز من قائمة المقترحات
+        function suggestQuestion(text) {
+            document.getElementById("userInput").value = text;
+            sendMessage();
+        }
+
+        // مسح المحادثة وبدء جلسة جديدة
+        function resetChat() {
+            document.getElementById("chat-box").innerHTML = '';
+            document.getElementById("chat-box").appendChild(document.getElementById("welcomeScreen"));
+            document.getElementById("welcomeScreen").classList.remove("hidden");
+        }
+
+        // دالة نسخ النص بجانب إجابة الذكاء الاصطناعي
+        function copyText(button, text) {
+            button.innerHTML = '<i class="fa-solid fa-check text-green-400"></i>';
+         
+            button.innerHTML = '<i class="fa-solid fa-check text-green-400"></i>';
+            setTimeout(() => { button.innerHTML = '<i class="fa-regular fa-copy"></i>'; }, 2000);
+        }
+
+        // وظيفة تدرج ظهور النص مثل المواقع الكبرى
+        function typeWriter(element, text, index = 0) {
+            if (index < text.length) {
+                element.innerHTML += text.charAt(index);
