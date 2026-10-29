@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT الخاص بي</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #343541; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 90vh; }
+        #chat-box { flex: 1; overflow-y: auto; border: 1px solid #4d4d4d; padding: 15px; border-radius: 8px; background: #40414f; margin-bottom: 10px; }
+        .msg { padding: 10px; margin: 5px 0; border-radius: 5px; max-width: 80%; display: block; clear: both; }
+        .user { background-color: #202123; float: right; }
+        .bot { background-color: #10a37f; float: left; }
+        .input-area { display: flex; gap: 10px; clear: both; }
+        input { flex: 1; padding: 12px; border-radius: 5px; border: none; font-size: 16px; background-color: #40414f; color: white; }
+        button { background: #10a37f; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <h2>🤖 شات الذكاء الاصطناعي المتطور</h2>
+    <div id="chat-box"></div>
+    
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="اسألني أي شيء...">
+        <button onclick="sendMessage()">إرسال</button>
+    </div>
+
+    <script>
+        // ضع مفتاح الـ API المجاني الخاص بك من Google AI Studio بين القوسين
+        const API_KEY = "ضع_مفتاح_API_الخاص_بك_هنا"; 
+
+        async function sendMessage() {
+            const inputDel = document.getElementById("userInput");
+            const chatBox = document.getElementById("chat-box");
+            const text = inputDel.value.trim();
+            if(!text) return;
+
+            chatBox.innerHTML += `<div class="msg user"><b>أنت:</b> ${text}</div>`;
+            inputDel.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const res = await fetch(`https://googleapis.com{API_KEY}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: text }] }] })
+                });
+                const data = await res.json();
+                const reply = data.candidates[0].content.parts[0].text;
+
+                chatBox.innerHTML += `<div class="msg bot"><b>الذكاء الاصطناعي:</b> ${reply}</div>`;
+            } catch(e) {
+                chatBox.innerHTML += `<div class="msg" style="color:red; clear:both;">حدث خطأ! تأكد من صحة مفتاح الـ API وتوصيل الإنترنت.</div>`;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
